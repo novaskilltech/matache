@@ -1,8 +1,8 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { serverDb } from "@/lib/supabase/server";
 import { HttpError } from "@/lib/http";
 export async function checkBudget(
-  db: SupabaseClient,
+  db: Awaited<ReturnType<typeof serverDb>>,
   workspaceId: string,
   kind: "upload" | "ai",
 ) {

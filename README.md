@@ -20,12 +20,12 @@ Sans configuration Supabase, l’interface présente uniquement trois dossiers f
 
 1. Créer ou sélectionner un projet PostgreSQL Supabase.
 2. Renseigner `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-3. Appliquer les six migrations de `supabase/migrations/` dans l’ordre. Avec la CLI : `npx supabase link --project-ref <ref>` puis `npx supabase db push`. Vérifier les commandes avec `--help` selon la version installée.
-4. Dans Auth, activer email/mot de passe, confirmation email et une politique de mot de passe d’au moins 12 caractères. Configurer Site URL et les Redirect URLs pour `https://votre-domaine/auth/callback` et le développement local.
+3. Appliquer les sept migrations de `supabase/migrations/` dans l’ordre. Elles créent les schémas dédiés `matache` et `matache_private`. Exposer uniquement `matache` dans le Data API, en conservant les schémas déjà exposés. Sur un projet partagé, appliquer seulement ces migrations ; ne pas synchroniser aveuglément les historiques de plusieurs dépôts avec `db push`. Voir [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+4. Sur un projet dédié, configurer Auth email/mot de passe et la confirmation email. Sur un projet partagé, conserver les réglages existants et ajouter les Redirect URLs exactes `https://votre-domaine/auth/callback` et celle du développement local. Ne pas remplacer la Site URL de l’autre application. MaTache demande au moins 12 caractères lors de l’inscription.
 5. Créer un compte dans `/login`, confirmer son email et se connecter. Le premier accès crée un espace et son propriétaire de façon atomique et idempotente.
 6. Contrôler les advisors Supabase après application sur le projet cible. Ils ne peuvent pas être lancés sur un projet distant non connecté.
 
-Les migrations créent les onze tables prévues, le bucket **privé** `matache-private`, les politiques RLS et les transactions métier. Toutes les relations métier utilisent des clés étrangères composées `(workspace_id, id)` pour empêcher les liens entre espaces. Les membres ne peuvent pas modifier leurs appartenances via le Data API. Aucun droit ne dépend de `user_metadata`.
+Les migrations créent les onze tables prévues dans `matache`, le bucket **privé** `matache-private`, les politiques RLS et les transactions métier. Toutes les relations métier utilisent des clés étrangères composées `(workspace_id, id)` pour empêcher les liens entre espaces. Les membres ne peuvent pas modifier leurs appartenances via le Data API. Aucun droit ne dépend de `user_metadata`.
 
 Pour une pile Supabase locale complète : Docker requis, puis `npx supabase start` et `npx supabase db reset`. Les tests du dépôt utilisent aussi un vrai moteur PostgreSQL embarqué (PGlite), avec schémas Auth/Storage simulés ; ils ne remplacent pas une vérification du service Auth et du stockage cloud.
 
@@ -90,7 +90,7 @@ Activer les notifications dans `/settings`. Le bouton demande explicitement l’
 
 `GET /api/cron/reminders` exige `Authorization: Bearer <CRON_SECRET>`. Les rappels sont réclamés atomiquement avec `SKIP LOCKED`, regroupés par espace, réessayés jusqu’à 5 fois, et les abonnements expirés sont supprimés. Les actions terminées ne sont plus envoyées. Un espace sans abonnement garde ses rappels en attente et visibles dans le tableau de bord. Une livraison réussie à au moins un abonnement termine le lot de l’espace ; la livraison exacte à chaque appareil n’est pas garantie. En cas d’erreur après envoi et avant marquage, une notification générique peut être répétée.
 
-`vercel.json` programme un passage toutes les 5 minutes : **cette fréquence nécessite un plan Vercel compatible (Pro ou supérieur)**. Pour Hobby, supprimer ce bloc cron et appeler la route depuis un ordonnanceur externe. Les notifications Web Push ne garantissent pas une livraison à l’heure exacte : réseau, navigateur et permission restent nécessaires. Les rappels restent visibles dans l’application.
+`vercel.json` est compatible avec Vercel Hobby et ne déclare pas de cron Vercel. `supabase/operations/schedule-reminders.sql` prévoit un appel toutes les cinq minutes via Supabase Cron + pg_net, avec l’origine HTTPS et le secret dans Vault. Activer cette opération après configuration du déploiement et de ses secrets ; elle n’est pas encore exécutée. Les notifications Web Push ne garantissent pas une livraison à l’heure exacte : réseau, navigateur et permission restent nécessaires. Les rappels restent visibles dans l’application.
 
 La déconnexion supprime les abonnements de l’utilisateur pour éviter des notifications sur un appareil partagé. Désactiver les notifications nettoie aussi la file locale de partage.
 
@@ -122,12 +122,12 @@ L’aperçu ne comporte que Mme Benali, M. Amrani et Famille Haddad. Pour créer
 - Erreurs HTTP génériques, aucune journalisation du contenu des captures, aucune analytique.
 - Clés uniquement dans les variables d’environnement, dépendances figées, TypeScript strict.
 - RLS et transactions vérifiées en PostgreSQL avec deux utilisateurs indépendants.
-- Ne pas exposer `private` dans les schémas du Data API.
+- Ne pas exposer `matache_private` dans les schémas du Data API.
 - Mettre en place sauvegardes et politique de conservation/suppression des données sur le projet réel. Les imports ignorés et fichiers abandonnés sont conservés ; leur purge n’est pas automatisée pour éviter une suppression silencieuse de pièces.
 - Examiner périodiquement les rappels ayant `attempts >= 5 AND sent_at IS NULL`. Après correction, remettre `attempts=0, claimed_at=NULL` avec un accès administrateur autorisé.
 
 ## Déploiement
 
-Importer cette branche dans Vercel, définir les variables, appliquer les migrations Supabase, régler les redirections Auth, puis tester les flux avec des dossiers fictifs. Utiliser une URL HTTPS stable pour l’installation PWA et les clés VAPID. Aucune clé ni infrastructure payante n’est provisionnée par le dépôt.
+Importer cette branche dans Vercel, définir les variables, appliquer les migrations Supabase, régler les redirections Auth, puis tester les flux avec des dossiers fictifs. Utiliser une URL HTTPS stable pour l’installation PWA et les clés VAPID. L’état réel de la base et du déploiement figure dans [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 La branche `main` ne doit être modifiée qu’après revue et validation explicite.

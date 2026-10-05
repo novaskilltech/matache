@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
 import { z } from "zod";
 import { subscriptionSchema, safePushPayload } from "@/lib/domain/push";
+import { DATABASE_SCHEMA } from "@/lib/config";
 const reminderSchema = z.object({
   id: z.string().uuid(),
   workspace_id: z.string().uuid(),
@@ -21,6 +22,7 @@ export async function deliverReminders() {
   if (!url || !key || !publicKey || !privateKey || !subject)
     throw new Error("PUSH_NOT_CONFIGURED");
   const db = createClient(url, key, {
+    db: { schema: DATABASE_SCHEMA },
     auth: { persistSession: false, autoRefreshToken: false },
   });
   webpush.setVapidDetails(subject, publicKey, privateKey);

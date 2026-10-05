@@ -11,16 +11,20 @@ beforeAll(async () => {
   await db.exec(
     `create role authenticated;create role service_role bypassrls; create role anon; create schema auth; create table auth.users(id uuid primary key); create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant all on storage.objects to authenticated;`,
   );
+  await db.exec(
+    `create table public.profiles(id uuid primary key,label text);insert into public.profiles values('${userA}','Existing app');create function public.bootstrap_workspace() returns text language sql as $$select 'existing-app'::text$$;create schema private;create table private.existing_data(id integer);`,
+  );
   for (const f of readdirSync("supabase/migrations").sort())
     await db.exec(readFileSync("supabase/migrations/" + f, "utf8"));
+  await db.exec("set search_path=matache,public");
   await db.query("insert into auth.users values ($1),($2)", [userA, userB]);
   await db.exec(`set role authenticated;set request.jwt.claim.sub='${userA}'`);
   wa = (
-    await db.query<{ id: string }>("select public.bootstrap_workspace() as id")
+    await db.query<{ id: string }>("select matache.bootstrap_workspace() as id")
   ).rows[0].id;
   await db.exec(`set request.jwt.claim.sub='${userB}'`);
   wb = (
-    await db.query<{ id: string }>("select public.bootstrap_workspace() as id")
+    await db.query<{ id: string }>("select matache.bootstrap_workspace() as id")
   ).rows[0].id;
   await db.exec(`set request.jwt.claim.sub='${userA}'`);
 }, 30000);
@@ -28,6 +32,32 @@ afterAll(async () => {
   await db.close();
 });
 describe("real PostgreSQL integration and RLS", () => {
+  it("coexists with existing public tables, RPCs and private schemas", async () => {
+    await db.exec("reset role");
+    try {
+      expect(
+        (await db.query<{ label: string }>("select label from public.profiles"))
+          .rows,
+      ).toEqual([{ label: "Existing app" }]);
+      expect(
+        (
+          await db.query<{ value: string }>(
+            "select public.bootstrap_workspace() as value",
+          )
+        ).rows[0].value,
+      ).toBe("existing-app");
+      expect(
+        (await db.query("select * from private.existing_data")).rows,
+      ).toHaveLength(0);
+      expect(
+        (await db.query("select * from matache.profiles")).rows,
+      ).toHaveLength(2);
+    } finally {
+      await db.exec(
+        `set role authenticated;set request.jwt.claim.sub='${userA}'`,
+      );
+    }
+  });
   it("creates a client and normalized unique number", async () => {
     clientId = (
       await db.query<{ id: string }>(
@@ -127,11 +157,41 @@ describe("real PostgreSQL integration and RLS", () => {
     ).rejects.toThrow();
     await db.exec("set role anon");
     await expect(
-      db.query("select public.bootstrap_workspace()"),
+      db.query("select matache.bootstrap_workspace()"),
     ).rejects.toThrow();
     await db.exec(
       `set role authenticated;set request.jwt.claim.sub='${userA}'`,
     );
+  });
+  it("guards MaTache storage against broad policies from another app", async () => {
+    await db.exec(
+      "reset role;create policy existing_app_storage on storage.objects for all to authenticated using(true) with check(true);set role authenticated",
+    );
+    try {
+      await expect(
+        db.query(
+          "insert into storage.objects(bucket_id,name) values('other-app','non-uuid/file.png')",
+        ),
+      ).resolves.toBeDefined();
+      await expect(
+        db.query(
+          "insert into storage.objects(bucket_id,name) values('matache-private',$1)",
+          [wb + "/secret.png"],
+        ),
+      ).rejects.toThrow();
+      expect(
+        (
+          await db.query(
+            "select * from storage.objects where bucket_id='matache-private' and name like $1",
+            [wb + "/%"],
+          )
+        ).rows,
+      ).toHaveLength(0);
+    } finally {
+      await db.exec(
+        "reset role;drop policy existing_app_storage on storage.objects;set role authenticated",
+      );
+    }
   });
   it("validates a dossier atomically, matches existing phone, keeps source facts and is idempotent", async () => {
     const aid = (

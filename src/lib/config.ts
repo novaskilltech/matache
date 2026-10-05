@@ -1,3 +1,5 @@
+export const DATABASE_SCHEMA = "matache";
+export const AUTH_COOKIE_NAME = "matache-auth";
 export function isConfigured() {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

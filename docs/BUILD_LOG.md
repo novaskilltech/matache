@@ -30,3 +30,9 @@ Chaque entrée correspond à un passage réel des trois contrôles locaux. Les v
 - Audit npm (production) : 0 vulnérabilité signalée.
 
 - Phase 11-delivery : typecheck, build et tests réussis.
+
+- Phase isolation-supabase : typecheck, build et tests réussis.
+
+- Phase database-advisors : typecheck, build et tests réussis.
+
+- Phase cloud-database-ready : typecheck, build et tests réussis.

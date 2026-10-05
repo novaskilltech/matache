@@ -1,11 +1,13 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { publicConfig } from "@/lib/config";
+import { publicConfig, DATABASE_SCHEMA, AUTH_COOKIE_NAME } from "@/lib/config";
 export async function serverDb() {
   const jar = await cookies();
   const { url, key } = publicConfig();
   return createServerClient(url, key, {
+    db: { schema: DATABASE_SCHEMA },
+    cookieOptions: { name: AUTH_COOKIE_NAME },
     cookies: {
       getAll: () => jar.getAll(),
       setAll: (values) => {

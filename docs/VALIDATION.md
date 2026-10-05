@@ -3,7 +3,7 @@
 ## Résultats locaux
 
 - TypeScript strict et build de production réussis à chaque phase.
-- 42 tests unitaires/d’intégration réussis ; 10 scénarios navigateur réussis (ordinateur et mobile).
+- 44 tests unitaires/d’intégration réussis ; 10 scénarios navigateur réussis (ordinateur et mobile).
 - Audit npm des dépendances de production : 0 vulnérabilité signalée.
 - Revue visuelle sur mobile et réception réelle d’un POST multipart par le service worker réussies.
 - Le téléchargement Playwright standard a échoué dans cet environnement ; les tests ont utilisé Chromium 153 installé via le paquet officiel `@sparticuz/chromium`, avec `BROWSER_EXECUTABLE_PATH=/tmp/chromium`.
@@ -15,7 +15,7 @@ Le cahier des charges est implémenté par phases. Les résultats locaux sont co
 | Exigence                   | Implémentation                                                   | Vérification                                                                 |
 | -------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | Auth + session             | Auth Supabase, confirmation email, proxy et vérification serveur | Build, rejet des API privées ; service Auth réel à vérifier                  |
-| Tables + RLS               | Six migrations, clés étrangères composées, bootstrap privé       | Tests PostgreSQL avec deux utilisateurs et rôle anonyme                      |
+| Tables + RLS               | Sept migrations dans `matache`, clés étrangères composées, bootstrap privé       | Tests PostgreSQL avec deux utilisateurs et rôle anonyme                      |
 | Clients/actions/historique | Repositories, transactions, écrans dédiés                        | PostgreSQL + navigation navigateur                                           |
 | Upload privé               | Upload signé direct, contrôle binaire, URL signée 60 s           | Schémas, signatures et RLS Storage ; service Storage réel à vérifier         |
 | IA multimodale             | Adaptateur OpenAI, JSON Schema, Zod, gestion d’erreur            | Contrat simulé, multi-image et refus ; script d’évaluation réelle fourni     |
@@ -47,4 +47,4 @@ Les tests navigateur utilisent le mode aperçu fictif sans Supabase. Ils couvren
 8. Activer le push, programmer un rappel et tester l’ordonnanceur authentifié.
 9. Tester refus de permission, perte de réseau, abonnement expiré et déconnexion.
 
-Aucun déploiement, clé IA, envoi Web Push réel ou modification d’un projet Supabase distant n’a été effectué sans configuration fournie.
+La base distante a été configurée dans un schéma dédié du projet existant choisi avec l’utilisateur. Les contrôles SQL distants et les limites de l’isolation figurent dans [DEPLOYMENT.md](DEPLOYMENT.md). Le déploiement Vercel, l’évaluation IA et la livraison Web Push restent à effectuer.
