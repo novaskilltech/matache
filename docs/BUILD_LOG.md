@@ -36,3 +36,5 @@ Chaque entrée correspond à un passage réel des trois contrôles locaux. Les v
 - Phase database-advisors : typecheck, build et tests réussis.
 
 - Phase cloud-database-ready : typecheck, build et tests réussis.
+
+- Phase ui-refresh : typecheck, build et tests réussis.

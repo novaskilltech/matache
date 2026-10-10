@@ -9,6 +9,7 @@ import {
 import { TaskCard } from "@/components/task-card";
 import { Search } from "@/components/search";
 import { labels } from "@/lib/domain/models";
+import { Plus, ListTodo } from "lucide-react";
 export default async function Actions({
   searchParams,
 }: {
@@ -41,13 +42,16 @@ export default async function Actions({
     );
   return (
     <>
-      <div className="row between">
+      <div className="row between page-heading">
         <div>
-          <h1>Mes actions</h1>
+          <p className="eyebrow">LES PROCHAINES ÉTAPES</p>
+          <h1>
+            Mes actions <span className="count-pill">{filtered.length}</span>
+          </h1>
           <p className="muted">Une prochaine étape pour chaque dossier.</p>
         </div>
         <Link className="button" href="/import">
-          + Ajouter
+          <Plus size={18} aria-hidden="true" /> Ajouter
         </Link>
       </div>
       <Search query={q}>
@@ -55,7 +59,6 @@ export default async function Actions({
           name="filter"
           defaultValue={filter}
           aria-label="Filtrer les actions"
-          style={{ width: "auto" }}
         >
           {[
             ["active", "Actives"],
@@ -80,7 +83,15 @@ export default async function Actions({
           />
         ))}
         {!filtered.length && (
-          <div className="card empty">Aucune action dans cette sélection.</div>
+          <div className="card empty">
+            <span className="empty-icon">
+              <ListTodo size={28} aria-hidden="true" />
+            </span>
+            <h2>Aucune action dans cette sélection.</h2>
+            <p className="muted">
+              Changez le filtre ou importez un nouvel échange.
+            </p>
+          </div>
         )}
       </div>
     </>

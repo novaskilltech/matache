@@ -22,21 +22,26 @@ export function Importer() {
   }
   return (
     <>
-      <section className="card empty">
-        <div className="task-icon" style={{ display: "inline-flex" }}>
-          <Images size={36} />
+      <section className="card empty import-panel">
+        <span className="import-kicker">01 · IMPORTER VOS CAPTURES</span>
+        <div className="upload-illustration" aria-hidden="true">
+          <div className="upload-sheet back" />
+          <div className="upload-sheet">
+            <Images size={34} />
+          </div>
         </div>
         <h2>Capturez. Partagez. Suivez.</h2>
         <p className="muted">
           Une ou plusieurs captures du même client.
-          <br />8 images maximum, 10 Mo par image, 20 Mo par dossier.
+          <br />
+          MaTache vous aide à retrouver ce qu’il reste à faire.
         </p>
         <div className="row" style={{ justifyContent: "center" }}>
           <button
             disabled={busy || !isConfigured()}
             onClick={() => picker.current?.click()}
           >
-            <Images size={18} />
+            <Images size={18} aria-hidden="true" />
             Choisir les captures
           </button>
           <button
@@ -44,10 +49,15 @@ export function Importer() {
             disabled={busy || !isConfigured()}
             onClick={() => camera.current?.click()}
           >
-            <Camera size={18} />
+            <Camera size={18} aria-hidden="true" />
             Appareil photo
           </button>
         </div>
+        <p className="upload-limits">
+          JPEG, PNG ou WebP · 8 images maximum
+          <br />
+          10 Mo par image · 20 Mo par dossier
+        </p>
         <input
           ref={picker}
           aria-label="Captures du dossier"
@@ -73,8 +83,8 @@ export function Importer() {
           </p>
         )}
       </section>
-      <p className="row muted" style={{ fontSize: 12 }}>
-        <ShieldCheck size={16} />
+      <p className="privacy-note">
+        <ShieldCheck size={16} aria-hidden="true" />
         Vos captures sont privées et accessibles uniquement dans votre espace.
       </p>
     </>

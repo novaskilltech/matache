@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Nav } from "@/components/nav";
+import { Brand } from "@/components/brand";
+import { Settings, FlaskConical } from "lucide-react";
 import { isConfigured } from "@/lib/config";
 import { serverDb } from "@/lib/supabase/server";
 export default async function Layout({
@@ -15,23 +17,33 @@ export default async function Layout({
   }
   return (
     <>
+      <a href="#workspace-content" className="skip-link">
+        Aller au contenu
+      </a>
       <main className="shell">
         <header className="topbar">
-          <Link className="brand" href="/">
-            <span className="logo">✓</span>MaTache
-            <span className="badge">MON ESPACE</span>
+          <Link className="mobile-brand" href="/" aria-label="MaTache, accueil">
+            <Brand />
           </Link>
-          <Link className="muted" href="/settings">
+          <span className="workspace-label">
+            <span className="status-dot" /> Mon espace de suivi
+          </span>
+          <Link className="settings-link" href="/settings">
+            <Settings size={18} aria-hidden="true" />
             Paramètres
           </Link>
         </header>
         {!isConfigured() && (
-          <p className="notice">
-            Aperçu avec des données fictives. Configurez Supabase pour
-            enregistrer vos dossiers.
-          </p>
+          <div className="preview-notice">
+            <FlaskConical size={17} aria-hidden="true" />
+            <p>
+              <strong>Mode aperçu</strong> · Les dossiers affichés sont fictifs.
+            </p>
+          </div>
         )}
-        {children}
+        <div id="workspace-content" tabIndex={-1}>
+          {children}
+        </div>
       </main>
       <Nav />
     </>

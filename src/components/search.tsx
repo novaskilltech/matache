@@ -1,3 +1,4 @@
+import { Search as SearchIcon } from "lucide-react";
 export function Search({
   query = "",
   placeholder = "Client, téléphone, ville, date ou action…",
@@ -8,14 +9,16 @@ export function Search({
   children?: React.ReactNode;
 }) {
   return (
-    <form className="row" method="get" style={{ margin: "18px 0" }}>
-      <input
-        aria-label="Rechercher"
-        placeholder={placeholder}
-        name="q"
-        defaultValue={query}
-        style={{ flex: 1, minWidth: 180 }}
-      />
+    <form className="search-form" method="get">
+      <div className="search-input">
+        <SearchIcon size={19} aria-hidden="true" />
+        <input
+          aria-label="Rechercher"
+          placeholder={placeholder}
+          name="q"
+          defaultValue={query}
+        />
+      </div>
       {children}
       <button className="secondary">Rechercher</button>
     </form>

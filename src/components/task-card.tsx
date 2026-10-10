@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { Phone, FileText, Clock, Plane } from "lucide-react";
+import {
+  Phone,
+  FileText,
+  Clock,
+  Plane,
+  ArrowUpRight,
+  ListTodo,
+  Map,
+} from "lucide-react";
 import type { Action, Client } from "@/lib/domain/models";
 import { labels, priorityLabels, statusLabels } from "@/lib/domain/models";
 import { dateLabel, isOverdue } from "@/lib/domain/queue";
@@ -17,36 +25,53 @@ export function TaskCard({
         ? Phone
         : a.category === "WAITING_CLIENT"
           ? Clock
-          : Plane;
+          : a.category === "OMRA_INFO"
+            ? Plane
+            : a.category === "TRIP_SUMMARY"
+              ? Map
+              : ListTodo;
+  const overdue = isOverdue(a);
   return (
-    <Link className="card task" href={"/actions/" + a.id}>
-      <div className="task-icon">
-        <Icon size={22} />
+    <Link
+      className={`card task task-${a.category.toLowerCase()} ${overdue ? "task-overdue" : ""}`}
+      href={"/actions/" + a.id}
+    >
+      <div className="task-icon" aria-hidden="true">
+        <Icon size={21} />
       </div>
       <div className="task-body">
         <div className="row between">
-          <span className="muted">
+          <span className="task-client">
             {client?.name || client?.phone_normalized || "Client à identifier"}
           </span>
           <span
             className={
               "badge " +
-              (a.priority === "URGENT" || isOverdue(a) ? "urgent" : "")
+              (a.priority === "URGENT" || overdue
+                ? "urgent"
+                : a.priority === "TODAY"
+                  ? "today"
+                  : "neutral")
             }
           >
-            {isOverdue(a) ? "EN RETARD" : priorityLabels[a.priority]}
+            {overdue ? "EN RETARD" : priorityLabels[a.priority]}
           </span>
         </div>
         <h3>{a.title}</h3>
-        <p className="muted" style={{ fontSize: 13, margin: "6px 0 12px" }}>
-          {a.description}
-        </p>
-        <div className="row muted" style={{ fontSize: 12 }}>
-          <span>{labels[a.category]}</span>
-          <span>· {statusLabels[a.status]}</span>
-          <span>· {dateLabel(a.due_at)}</span>
+        {a.description && <p className="task-description">{a.description}</p>}
+        <div className="task-meta">
+          <span className="category-tag">{labels[a.category]}</span>
+          <span className="task-status">
+            <span className={`status-dot status-${a.status.toLowerCase()}`} />
+            {statusLabels[a.status]}
+          </span>
+          <span className={overdue ? "due-overdue" : ""}>
+            <Clock size={13} aria-hidden="true" />
+            {dateLabel(a.due_at)}
+          </span>
         </div>
       </div>
+      <ArrowUpRight className="card-arrow" size={18} aria-hidden="true" />
     </Link>
   );
 }

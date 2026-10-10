@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mkdirSync } from "node:fs";
 test("dashboard → action → dossier and search", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -6,6 +7,21 @@ test("dashboard → action → dossier and search", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: /Que dois-je faire/ }),
   ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await expect(
+    page
+      .getByRole("navigation")
+      .getByRole("link", { name: "Accueil", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  mkdirSync("docs/ui", { recursive: true });
+  await page.screenshot({
+    path: `docs/ui/matache-${test.info().project.name}.png`,
+    fullPage: true,
+  });
   await page
     .getByRole("link")
     .filter({ hasText: "Préparer la facture" })
@@ -18,6 +34,11 @@ test("dashboard → action → dossier and search", async ({ page }) => {
     page.getByRole("heading", { name: "Mme Benali", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Historique" })).toBeVisible();
+  await expect(
+    page
+      .getByRole("navigation")
+      .getByRole("link", { name: "Clients", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
   await page
     .getByRole("navigation")
     .getByRole("link", { name: "Actions", exact: true })
