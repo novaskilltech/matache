@@ -34,10 +34,11 @@ export class OpenAIProvider implements AnalysisProvider {
     private key: string,
     private model: string,
     private send: typeof fetch = fetch,
+    private endpoint: string = process.env.AI_BASE_URL || "https://api.openai.com/v1/chat/completions",
   ) {}
   async analyze(images: ImageInput[], referenceTime: string) {
     const response = await this.send(
-      "https://api.openai.com/v1/chat/completions",
+      this.endpoint,
       {
         method: "POST",
         headers: {
@@ -102,10 +103,20 @@ export class OpenAIProvider implements AnalysisProvider {
   }
 }
 export function configuredProvider(): AnalysisProvider {
-  if (process.env.AI_PROVIDER !== "openai" || !process.env.AI_API_KEY)
+  const provider = process.env.AI_PROVIDER;
+  if (!provider || !process.env.AI_API_KEY)
     throw new Error("AI_NOT_CONFIGURED");
+  const endpoint =
+    process.env.AI_BASE_URL ||
+    (provider === "openrouter"
+      ? "https://openrouter.ai/api/v1/chat/completions"
+      : "https://api.openai.com/v1/chat/completions");
+  const defaultModel =
+    provider === "openrouter" ? "openai/gpt-4o-mini" : "gpt-4.1-mini";
   return new OpenAIProvider(
     process.env.AI_API_KEY,
-    process.env.AI_MODEL || "gpt-4.1-mini",
+    process.env.AI_MODEL || defaultModel,
+    fetch,
+    endpoint,
   );
 }
